@@ -6,25 +6,26 @@ from imutils.perspective import four_point_transform
 import imutils
 from easyocr import Reader
 import cv2
-import numpy as np
-from PIL import ImageFont, ImageDraw, Image
+# import numpy as np
+# from PIL import ImageFont, ImageDraw, Image
 import re
 from icecream import ic
 
 
 class Solution:
     def __init__(self):
-        self.title = 'image'
-        self.img = None
-        self.cv_img = None
-        self.figsize = (6 ,3)
-        self.color = (0, 0, 0)
-        self.font_size = 22
-        self.image_url = 'data/images/1 (44).jpg'
-        self.org_image = cv2.imread(self.image_url, cv2.IMREAD_COLOR) 
+        self.title='image'
+        self.figsize=(6, 3)  # plt_imshow size 
+        self.color=(0, 0, 0)
+        self.width=200
+        self.ksize=(5, 5)
+        self.min_threshold=50
+        self.max_threshold=200
+        self.langs=['ko', 'en']
+        self.image_url='data/images/1 (44).jpg'
+        self.org_image=cv2.imread(self.image_url, cv2.IMREAD_COLOR) 
         
     def solution(self):
-        # self.put_text()
         self.read_text()
 
     # def put_text(self):
@@ -66,14 +67,17 @@ class Solution:
             plt.xticks([]), plt.yticks([])
             plt.show()
 
-    def make_scan_image(self, image, width, ksize, min_threshold, max_threshold):
-        image = imutils.resize(image, width=width)
+    def make_scan_image(self):
+        min_threshold = self.min_threshold
+        max_threshold = self.max_threshold
+        image = self.org_image
+        image = imutils.resize(image, width=self.width)
         ratio = self.org_image.shape[1] / float(image.shape[1])
         
         # 이미지를 grayscale로 변환하고 blur를 적용
         # 모서리를 찾기위한 이미지 연산
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(gray, ksize, 0)
+        blurred = cv2.GaussianBlur(gray, self.ksize, 0)
         edged = cv2.Canny(blurred, min_threshold, max_threshold)
         
         image_list_title = ['gray', 'blurred', 'edged']
@@ -108,7 +112,7 @@ class Solution:
         
         # 원본 이미지에 찾은 윤곽을 기준으로 이미지를 보정
         transform_image = four_point_transform(self.org_image, findCnt.reshape(4, 2) * ratio)
-             
+
         self.plt_imshow(image_list_title, image_list)
         self.plt_imshow("Transform", transform_image)
         
@@ -117,10 +121,9 @@ class Solution:
 
     def read_text(self):
         self.plt_imshow("orignal image", self.org_image )
-        book_image = self.make_scan_image(self.org_image, width=200, ksize=(5, 5), min_threshold=75, max_threshold=200)
-        langs = ['ko', 'en']
+        book_image = self.make_scan_image()
         print("[INFO] OCR'ing input image...")
-        reader = Reader(lang_list=langs, gpu=True)
+        reader = Reader(lang_list=self.langs, gpu=True)
         results = reader.readtext(book_image)
         results
         simple_results = reader.readtext(book_image, detail = 0)
@@ -138,7 +141,7 @@ class Solution:
         new_simple_results = []
 
         for i in range(len(simple_results)):
-            re.sub('[\/:*?"<>|]','', simple_results[i])
+            re.sub('[^A-Za-z0-9가-힣]','', simple_results[i])
             new_simple_results.append(simple_results[i])
 
         for word in new_simple_results:
