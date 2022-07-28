@@ -1,3 +1,6 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from matplotlib import pyplot as plt
 from imutils.perspective import four_point_transform
 import imutils
@@ -17,7 +20,7 @@ class Solution:
         self.figsize = (6 ,3)
         self.color = (0, 0, 0)
         self.font_size = 22
-        self.image_url = r'C:\Users\jinhee\project_readvice\readvice_easyOCR\data\images\1 (219).jpg'
+        self.image_url = 'data/images/1 (44).jpg'
         self.org_image = cv2.imread(self.image_url, cv2.IMREAD_COLOR) 
         
     def solution(self):
@@ -31,7 +34,6 @@ class Solution:
     #     draw.text((x, y), text, font=font, fill=self.color)
     #     self.cv_img = np.array(self.img)
     #     return self.cv_img
-
 
     def plt_imshow(self, title, img):
         plt.figure(figsize=self.figsize)
@@ -64,7 +66,6 @@ class Solution:
             plt.xticks([]), plt.yticks([])
             plt.show()
 
-
     def make_scan_image(self, image, width, ksize, min_threshold, max_threshold):
         image = imutils.resize(image, width=width)
         ratio = self.org_image.shape[1] / float(image.shape[1])
@@ -83,7 +84,6 @@ class Solution:
         cnts = imutils.grab_contours(cnts)
         cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
         
-        
         # 정렬된 contours를 반복문으로 수행하며 4개의 꼭지점을 갖는 도형을 검출
         approx = None
         findCnt = None
@@ -95,11 +95,10 @@ class Solution:
             if len(approx) == 4:
                 findCnt = approx
                 break
-        
+
         # 만약 추출한 윤곽이 없을 경우 오류
         if findCnt is None:
             raise Exception(("Could not find outline."))
-        
         
         output = image.copy()
         cv2.drawContours(output, [findCnt], -1, (0, 255, 0), 2)
@@ -109,7 +108,7 @@ class Solution:
         
         # 원본 이미지에 찾은 윤곽을 기준으로 이미지를 보정
         transform_image = four_point_transform(self.org_image, findCnt.reshape(4, 2) * ratio)
-        
+             
         self.plt_imshow(image_list_title, image_list)
         self.plt_imshow("Transform", transform_image)
         
@@ -149,6 +148,3 @@ class Solution:
 
         return new_simple_results
 
-
-if __name__ == '__main__':
-    Solution().solution()
